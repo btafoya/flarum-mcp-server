@@ -4,13 +4,50 @@ A [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server for [F
 
 ## Installation
 
+### Global install (recommended)
+
 ```bash
 npm install -g flarum-mcp-server
 ```
 
-## Configuration
+### npx (no install)
 
-Add to your Claude Code settings (`~/.claude/settings.json`):
+```bash
+npx flarum-mcp-server
+```
+
+## Claude Code CLI
+
+Add the server to Claude Code:
+
+```bash
+claude mcp add flarum --json '{"command":"flarum-mcp-server","env":{"FLARUM_BASE_URL":"https://your-forum.com","FLARUM_USERNAME":"your-email@example.com","FLARUM_PASSWORD":"your-password"}}'
+```
+
+Or edit `~/.claude/settings.json` directly:
+
+```json
+{
+  "mcpServers": {
+    "flarum": {
+      "command": "flarum-mcp-server",
+      "env": {
+        "FLARUM_BASE_URL": "https://your-forum.com",
+        "FLARUM_USERNAME": "your-email@example.com",
+        "FLARUM_PASSWORD": "your-password"
+      }
+    }
+  }
+}
+```
+
+Remove the server from Claude Code:
+
+```bash
+claude mcp remove flarum
+```
+
+## Configuration
 
 ```json
 {

@@ -20,7 +20,7 @@ import { flarumClient } from "./flarum-client.js";
 const server = new Server(
   {
     name: "flarum-mcp-server",
-    version: "1.0.0",
+    version: "1.0.1",
   },
   {
     capabilities: {

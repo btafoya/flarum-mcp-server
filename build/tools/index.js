@@ -13,7 +13,9 @@ const tools = [
     // ==================== Authentication tools ====================
     {
         name: "flarum_login",
+        title: "Login",
         description: "Login to the Flarum forum to get an access token",
+        annotations: { openWorldHint: true },
         inputSchema: {
             type: "object",
             properties: {
@@ -36,7 +38,9 @@ const tools = [
     },
     {
         name: "flarum_logout",
+        title: "Logout",
         description: "Logout from the Flarum forum and clear the current session",
+        annotations: { openWorldHint: true },
         inputSchema: {
             type: "object",
             properties: {},
@@ -44,7 +48,9 @@ const tools = [
     },
     {
         name: "flarum_check_auth",
+        title: "Check Authentication",
         description: "Check current login status",
+        annotations: { readOnlyHint: true },
         inputSchema: {
             type: "object",
             properties: {},
@@ -53,7 +59,9 @@ const tools = [
     // ==================== Discussion tools ====================
     {
         name: "flarum_list_discussions",
+        title: "List Discussions",
         description: "Get forum discussion list, supports filtering by user and tag",
+        annotations: { readOnlyHint: true, openWorldHint: true },
         inputSchema: {
             type: "object",
             properties: {
@@ -101,7 +109,9 @@ const tools = [
     },
     {
         name: "flarum_get_discussion",
+        title: "Get Discussion",
         description: "Get detailed information of a single discussion",
+        annotations: { readOnlyHint: true, openWorldHint: true },
         inputSchema: {
             type: "object",
             properties: {
@@ -115,7 +125,9 @@ const tools = [
     },
     {
         name: "flarum_create_discussion",
+        title: "Create Discussion",
         description: "Create a new discussion topic (login required)",
+        annotations: { openWorldHint: true },
         inputSchema: {
             type: "object",
             properties: {
@@ -138,7 +150,9 @@ const tools = [
     },
     {
         name: "flarum_update_discussion",
+        title: "Update Discussion",
         description: "Update discussion info (login required, can only edit your own discussions)",
+        annotations: { openWorldHint: true },
         inputSchema: {
             type: "object",
             properties: {
@@ -156,7 +170,9 @@ const tools = [
     },
     {
         name: "flarum_delete_discussion",
+        title: "Delete Discussion",
         description: "Delete discussion (login required, can only delete your own discussions)",
+        annotations: { destructiveHint: true, openWorldHint: true },
         inputSchema: {
             type: "object",
             properties: {
@@ -175,7 +191,9 @@ const tools = [
     },
     {
         name: "flarum_list_tags",
+        title: "List Tags",
         description: "Get all forum tags",
+        annotations: { readOnlyHint: true, openWorldHint: true },
         inputSchema: {
             type: "object",
             properties: {},
@@ -184,7 +202,9 @@ const tools = [
     // ==================== User tools ====================
     {
         name: "flarum_list_users",
+        title: "List Users",
         description: "Get forum user list",
+        annotations: { readOnlyHint: true, openWorldHint: true },
         inputSchema: {
             type: "object",
             properties: {
@@ -207,7 +227,9 @@ const tools = [
     },
     {
         name: "flarum_get_user",
+        title: "Get User",
         description: "Get detailed information of a single user",
+        annotations: { readOnlyHint: true, openWorldHint: true },
         inputSchema: {
             type: "object",
             properties: {
@@ -222,7 +244,9 @@ const tools = [
     // ==================== Post tools ====================
     {
         name: "flarum_list_posts",
+        title: "List Posts",
         description: "Get all replies in the specified discussion",
+        annotations: { readOnlyHint: true, openWorldHint: true },
         inputSchema: {
             type: "object",
             properties: {
@@ -246,7 +270,9 @@ const tools = [
     },
     {
         name: "flarum_get_post",
+        title: "Get Post",
         description: "Get detailed information of a single post",
+        annotations: { readOnlyHint: true, openWorldHint: true },
         inputSchema: {
             type: "object",
             properties: {
@@ -260,7 +286,9 @@ const tools = [
     },
     {
         name: "flarum_create_post",
+        title: "Create Post",
         description: "Create a new reply in a discussion (login required)",
+        annotations: { openWorldHint: true },
         inputSchema: {
             type: "object",
             properties: {
@@ -278,7 +306,9 @@ const tools = [
     },
     {
         name: "flarum_update_post",
+        title: "Update Post",
         description: "Update post content (login required, can only edit your own posts)",
+        annotations: { openWorldHint: true },
         inputSchema: {
             type: "object",
             properties: {
@@ -296,7 +326,9 @@ const tools = [
     },
     {
         name: "flarum_delete_post",
+        title: "Delete Post",
         description: "Delete post (login required, can only delete your own posts)",
+        annotations: { destructiveHint: true, openWorldHint: true },
         inputSchema: {
             type: "object",
             properties: {
