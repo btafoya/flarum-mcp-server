@@ -470,6 +470,61 @@ export class FlarumClient {
         }
         return users[0];
     }
+    /**
+     * Create user
+     */
+    async createUser(params) {
+        const body = {
+            data: {
+                type: "users",
+                attributes: {
+                    username: params.username,
+                    email: params.email,
+                    password: params.password,
+                },
+            },
+        };
+        const response = await this.request("POST", "/api/users", body);
+        const users = this.parseUsers(response);
+        return users[0];
+    }
+    /**
+     * Update user
+     */
+    async updateUser(id, params) {
+        const attributes = {};
+        if (params.username !== undefined) {
+            attributes.username = params.username;
+        }
+        if (params.email !== undefined) {
+            attributes.email = params.email;
+        }
+        if (params.password !== undefined) {
+            attributes.password = params.password;
+        }
+        if (params.bio !== undefined) {
+            attributes.bio = params.bio;
+        }
+        if (params.avatarUrl !== undefined) {
+            attributes.avatarUrl = params.avatarUrl;
+        }
+        const body = {
+            data: {
+                type: "users",
+                id,
+                attributes,
+            },
+        };
+        const response = await this.request("PATCH", `/api/users/${id}`, body);
+        const users = this.parseUsers(response);
+        return users[0];
+    }
+    /**
+     * Delete user
+     */
+    async deleteUser(id) {
+        await this.request("DELETE", `/api/users/${id}`);
+    }
     // ==================== Data parsing methods ====================
     buildIncludedMap(included = []) {
         const map = new Map();

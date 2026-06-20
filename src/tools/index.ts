@@ -252,6 +252,82 @@ const tools: Tool[] = [
       required: ["id"],
     },
   },
+  {
+    name: "flarum_create_user",
+    title: "Create User",
+    description: "Create a new forum user (login and admin permissions usually required)",
+    annotations: { openWorldHint: true },
+    inputSchema: {
+      type: "object",
+      properties: {
+        username: {
+          type: "string",
+          description: "Username for the new account",
+        },
+        email: {
+          type: "string",
+          description: "Email address for the new account",
+        },
+        password: {
+          type: "string",
+          description: "Password for the new account",
+        },
+      },
+      required: ["username", "email", "password"],
+    },
+  },
+  {
+    name: "flarum_update_user",
+    title: "Update User",
+    description: "Update an existing user profile (login required, can only edit your own profile unless admin)",
+    annotations: { openWorldHint: true },
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          description: "User ID",
+        },
+        username: {
+          type: "string",
+          description: "New username",
+        },
+        email: {
+          type: "string",
+          description: "New email address",
+        },
+        password: {
+          type: "string",
+          description: "New password",
+        },
+        bio: {
+          type: "string",
+          description: "Profile bio",
+        },
+        avatarUrl: {
+          type: "string",
+          description: "Avatar image URL",
+        },
+      },
+      required: ["id"],
+    },
+  },
+  {
+    name: "flarum_delete_user",
+    title: "Delete User",
+    description: "Delete a forum user (usually requires admin permissions)",
+    annotations: { destructiveHint: true, openWorldHint: true },
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          description: "User ID",
+        },
+      },
+      required: ["id"],
+    },
+  },
 
   // ==================== Post tools ====================
   {
@@ -583,6 +659,87 @@ async function handleToolCall(
             joinTime: user.joinTime,
             discussionCount: user.discussionCount,
             commentCount: user.commentCount,
+          })],
+        };
+      }
+
+      case "flarum_create_user": {
+        if (!flarumClient.isAuthenticated()) {
+          return {
+            content: [
+              { type: "text", text: "Error: please use the flarum_login tool first" },
+            ],
+            isError: true,
+          };
+        }
+
+        const newUser = await flarumClient.createUser({
+          username: args.username as string,
+          email: args.email as string,
+          password: args.password as string,
+        });
+
+        return {
+          content: [jsonText({
+            success: true,
+            message: "User created successfully",
+            user: {
+              id: newUser.id,
+              username: newUser.username,
+              displayName: newUser.displayName,
+            },
+          })],
+        };
+      }
+
+      case "flarum_update_user": {
+        if (!flarumClient.isAuthenticated()) {
+          return {
+            content: [
+              { type: "text", text: "Error: please use the flarum_login tool first" },
+            ],
+            isError: true,
+          };
+        }
+
+        const updatedUser = await flarumClient.updateUser(args.id as string, {
+          username: args.username as string | undefined,
+          email: args.email as string | undefined,
+          password: args.password as string | undefined,
+          bio: args.bio as string | undefined,
+          avatarUrl: args.avatarUrl as string | undefined,
+        });
+
+        return {
+          content: [jsonText({
+            success: true,
+            message: "User updated successfully",
+            user: {
+              id: updatedUser.id,
+              username: updatedUser.username,
+              displayName: updatedUser.displayName,
+              avatarUrl: updatedUser.avatarUrl,
+            },
+          })],
+        };
+      }
+
+      case "flarum_delete_user": {
+        if (!flarumClient.isAuthenticated()) {
+          return {
+            content: [
+              { type: "text", text: "Error: please use the flarum_login tool first" },
+            ],
+            isError: true,
+          };
+        }
+
+        await flarumClient.deleteUser(args.id as string);
+
+        return {
+          content: [jsonText({
+            success: true,
+            message: `User ${args.id} deleted`,
           })],
         };
       }

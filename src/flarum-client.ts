@@ -17,6 +17,8 @@ import type {
   UpdateDiscussionParams,
   CreatePostParams,
   UpdatePostParams,
+  CreateUserParams,
+  UpdateUserParams,
   JsonApiResponse,
   JsonApiErrorResponse,
   DiscussionAttributes,
@@ -625,6 +627,78 @@ export class FlarumClient {
       throw new Error(`User ${id} not found`);
     }
     return users[0];
+  }
+
+  /**
+   * Create user
+   */
+  async createUser(params: CreateUserParams): Promise<User> {
+    const body = {
+      data: {
+        type: "users",
+        attributes: {
+          username: params.username,
+          email: params.email,
+          password: params.password,
+        },
+      },
+    };
+
+    const response = await this.request<JsonApiResponse<UserAttributes>>(
+      "POST",
+      "/api/users",
+      body
+    );
+
+    const users = this.parseUsers(response);
+    return users[0];
+  }
+
+  /**
+   * Update user
+   */
+  async updateUser(id: string, params: UpdateUserParams): Promise<User> {
+    const attributes: Record<string, unknown> = {};
+
+    if (params.username !== undefined) {
+      attributes.username = params.username;
+    }
+    if (params.email !== undefined) {
+      attributes.email = params.email;
+    }
+    if (params.password !== undefined) {
+      attributes.password = params.password;
+    }
+    if (params.bio !== undefined) {
+      attributes.bio = params.bio;
+    }
+    if (params.avatarUrl !== undefined) {
+      attributes.avatarUrl = params.avatarUrl;
+    }
+
+    const body = {
+      data: {
+        type: "users",
+        id,
+        attributes,
+      },
+    };
+
+    const response = await this.request<JsonApiResponse<UserAttributes>>(
+      "PATCH",
+      `/api/users/${id}`,
+      body
+    );
+
+    const users = this.parseUsers(response);
+    return users[0];
+  }
+
+  /**
+   * Delete user
+   */
+  async deleteUser(id: string): Promise<void> {
+    await this.request<void>("DELETE", `/api/users/${id}`);
   }
 
   // ==================== Data parsing methods ====================

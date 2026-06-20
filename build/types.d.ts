@@ -168,4 +168,16 @@ export interface CreatePostParams {
 export interface UpdatePostParams {
     content: string;
 }
+export interface CreateUserParams {
+    username: string;
+    email: string;
+    password: string;
+}
+export interface UpdateUserParams {
+    username?: string;
+    email?: string;
+    password?: string;
+    bio?: string;
+    avatarUrl?: string;
+}
 //# sourceMappingURL=types.d.ts.map

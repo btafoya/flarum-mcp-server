@@ -193,3 +193,19 @@ export interface CreatePostParams {
 export interface UpdatePostParams {
   content: string;
 }
+
+// Create user parameters
+export interface CreateUserParams {
+  username: string;
+  email: string;
+  password: string;
+}
+
+// Update user parameters
+export interface UpdateUserParams {
+  username?: string;
+  email?: string;
+  password?: string;
+  bio?: string;
+  avatarUrl?: string;
+}
