@@ -8,7 +8,11 @@ export declare class FlarumClient {
     private token;
     private userId;
     private cacheFilePath;
-    constructor(baseUrl?: string);
+    private requestTimeoutMs;
+    constructor(baseUrl?: string, options?: {
+        cacheFilePath?: string;
+        requestTimeoutMs?: number;
+    });
     /**
      * Load cached token from file
      */

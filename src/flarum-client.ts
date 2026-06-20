@@ -39,14 +39,21 @@ export class FlarumClient {
   private token: string | null = null;
   private userId: string | null = null;
   private cacheFilePath: string;
+  private requestTimeoutMs: number;
 
-  constructor(baseUrl?: string) {
+  constructor(
+    baseUrl?: string,
+    options?: { cacheFilePath?: string; requestTimeoutMs?: number }
+  ) {
     this.baseUrl = baseUrl || process.env.FLARUM_BASE_URL || "http://localhost";
     // Remove trailing slash
     this.baseUrl = this.baseUrl.replace(/\/$/, "");
 
     // Cache file path: ~/.flarum-mcp-token.json under the user directory
-    this.cacheFilePath = join(homedir(), ".flarum-mcp-token.json");
+    this.cacheFilePath = options?.cacheFilePath || join(homedir(), ".flarum-mcp-token.json");
+
+    // ponytail: default 30s; override for tests or slow hosts
+    this.requestTimeoutMs = options?.requestTimeoutMs ?? 30000;
   }
 
   /**
@@ -191,7 +198,7 @@ export class FlarumClient {
     const url = `${this.baseUrl}${endpoint}`;
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000); // ponytail: 30s default, make configurable if hosts vary wildly
+    const timeout = setTimeout(() => controller.abort(), this.requestTimeoutMs);
 
     const options: RequestInit = {
       method,
