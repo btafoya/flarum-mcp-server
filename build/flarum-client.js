@@ -1,8 +1,8 @@
 /**
- * Flarum API 客户端
- * 封装所有与 Flarum 论坛的 HTTP 交互
+ * Flarum API client
+ * Wraps all HTTP interaction with the Flarum forum
  */
-import { readFileSync, writeFileSync, existsSync } from "fs";
+import { readFileSync, writeFileSync, existsSync, constants } from "fs";
 import { join } from "path";
 import { homedir } from "os";
 export class FlarumClient {
@@ -12,13 +12,13 @@ export class FlarumClient {
     cacheFilePath;
     constructor(baseUrl) {
         this.baseUrl = baseUrl || process.env.FLARUM_BASE_URL || "http://localhost";
-        // 移除末尾斜杠
+        // Remove trailing slash
         this.baseUrl = this.baseUrl.replace(/\/$/, "");
-        // 缓存文件路径：用户目录下的 .flarum-mcp-token.json
+        // Cache file path: ~/.flarum-mcp-token.json under the user directory
         this.cacheFilePath = join(homedir(), ".flarum-mcp-token.json");
     }
     /**
-     * 从文件加载缓存的 Token
+     * Load cached token from file
      */
     loadCachedToken() {
         try {
@@ -27,14 +27,14 @@ export class FlarumClient {
             }
             const data = readFileSync(this.cacheFilePath, "utf-8");
             const cache = JSON.parse(data);
-            // 验证是否是同一个论坛
+            // Verify it is the same forum
             if (cache.baseUrl !== this.baseUrl) {
-                console.error("缓存的 Token 来自不同的论坛，忽略");
+                console.error("Cached token is from a different forum, ignoring");
                 return false;
             }
-            // 验证是否过期
+            // Verify expiration
             if (Date.now() > cache.expiresAt) {
-                console.error("缓存的 Token 已过期");
+                console.error("Cached token has expired");
                 return false;
             }
             this.token = cache.token;
@@ -42,12 +42,12 @@ export class FlarumClient {
             return true;
         }
         catch (error) {
-            console.error("加载 Token 缓存失败:", error);
+            console.error("Failed to load token cache:", error);
             return false;
         }
     }
     /**
-     * 保存 Token 到文件
+     * Save token to file
      */
     saveCachedToken() {
         if (!this.token || !this.userId) {
@@ -59,18 +59,21 @@ export class FlarumClient {
                 userId: this.userId,
                 baseUrl: this.baseUrl,
                 createdAt: Date.now(),
-                // 5年有效期（使用 remember=true 登录）
+                // 5-year validity (login with remember=true)
                 expiresAt: Date.now() + 5 * 365 * 24 * 60 * 60 * 1000,
             };
-            writeFileSync(this.cacheFilePath, JSON.stringify(cache, null, 2), "utf-8");
-            console.error(`Token 已缓存到: ${this.cacheFilePath}`);
+            writeFileSync(this.cacheFilePath, JSON.stringify(cache, null, 2), {
+                encoding: "utf-8",
+                mode: constants.S_IRUSR | constants.S_IWUSR, // ponytail: 0o600, readable only by owner
+            });
+            console.error(`Token cached to: ${this.cacheFilePath}`);
         }
         catch (error) {
-            console.error("保存 Token 缓存失败:", error);
+            console.error("Failed to save token cache:", error);
         }
     }
     /**
-     * 清除缓存的 Token
+     * Clear cached token
      */
     clearCachedToken() {
         try {
@@ -79,18 +82,18 @@ export class FlarumClient {
             }
         }
         catch (error) {
-            console.error("清除 Token 缓存失败:", error);
+            console.error("Failed to clear token cache:", error);
         }
     }
     /**
-     * 验证当前 Token 是否有效
+     * Validate whether the current token is valid
      */
     async validateToken() {
         if (!this.token) {
             return false;
         }
         try {
-            // 尝试访问需要认证的 API 来验证 Token
+            // Try accessing an authenticated API to validate the token
             await this.request("GET", "/api/users/me");
             return true;
         }
@@ -99,7 +102,7 @@ export class FlarumClient {
         }
     }
     /**
-     * 设置认证 Token
+     * Set authentication token
      */
     setToken(token, userId) {
         this.token = token;
@@ -108,19 +111,19 @@ export class FlarumClient {
         }
     }
     /**
-     * 获取当前 Token
+     * Get current token
      */
     getToken() {
         return this.token;
     }
     /**
-     * 检查是否已登录
+     * Check whether logged in
      */
     isAuthenticated() {
         return this.token !== null;
     }
     /**
-     * 构建请求头
+     * Build request headers
      */
     getHeaders() {
         const headers = {
@@ -133,35 +136,43 @@ export class FlarumClient {
         return headers;
     }
     /**
-     * 发送 HTTP 请求
+     * Send HTTP request
      */
     async request(method, endpoint, body) {
         const url = `${this.baseUrl}${endpoint}`;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 30000); // ponytail: 30s default, make configurable if hosts vary wildly
         const options = {
             method,
             headers: this.getHeaders(),
+            signal: controller.signal,
         };
         if (body && (method === "POST" || method === "PATCH")) {
             options.body = JSON.stringify(body);
         }
-        const response = await fetch(url, options);
-        // 处理 204 No Content
-        if (response.status === 204) {
-            return {};
+        try {
+            const response = await fetch(url, options);
+            // Handle 204 No Content
+            if (response.status === 204) {
+                return {};
+            }
+            const data = await response.json();
+            if (!response.ok) {
+                const errorData = data;
+                const errorMessage = errorData.errors
+                    ?.map((e) => e.detail || e.code)
+                    .join(", ") || `HTTP ${response.status}`;
+                throw new Error(errorMessage);
+            }
+            return data;
         }
-        const data = await response.json();
-        if (!response.ok) {
-            const errorData = data;
-            const errorMessage = errorData.errors
-                ?.map((e) => e.detail || e.code)
-                .join(", ") || `HTTP ${response.status}`;
-            throw new Error(errorMessage);
+        finally {
+            clearTimeout(timeout);
         }
-        return data;
     }
-    // ==================== 认证 API ====================
+    // ==================== Authentication API ====================
     /**
-     * 登录获取 Token
+     * Login to get token
      */
     async login(identification, password, remember) {
         const endpoint = remember ? "/api/token?remember=1" : "/api/token";
@@ -169,25 +180,25 @@ export class FlarumClient {
             identification,
             password,
         });
-        // 保存 Token 到内存
+        // Save token to memory
         this.token = result.token;
         this.userId = result.userId;
-        // 保存 Token 到文件缓存
+        // Save token to file cache
         this.saveCachedToken();
         return result;
     }
     /**
-     * 登出
+     * Logout
      */
     logout() {
         this.token = null;
         this.userId = null;
-        // 清除缓存文件
+        // Clear cache file
         this.clearCachedToken();
     }
-    // ==================== 讨论 API ====================
+    // ==================== Discussion API ====================
     /**
-     * 获取讨论列表
+     * Get discussion list
      */
     async getDiscussions(params) {
         const queryParts = [];
@@ -200,51 +211,51 @@ export class FlarumClient {
         if (params?.sort) {
             queryParts.push(`sort=${params.sort}`);
         }
-        // 构建搜索查询（使用 Flarum Gambit 语法统一处理所有过滤条件）
+        // Build search query (use Flarum Gambit syntax to unify all filters)
         const searchParts = [];
-        // 关键词搜索
+        // Keyword search
         if (params?.search) {
             searchParts.push(params.search);
         }
-        // 按用户过滤（使用 gambit 语法 author:username）
+        // Filter by user (Gambit syntax author:username)
         if (params?.username) {
             searchParts.push(`author:${params.username}`);
         }
         else if (params?.userId) {
             searchParts.push(`author:${params.userId}`);
         }
-        // 按标签过滤（使用 gambit 语法 tag:slug）
+        // Filter by tag (Gambit syntax tag:slug)
         if (params?.tag) {
             searchParts.push(`tag:${params.tag}`);
         }
-        // 时间过滤（使用 gambit 语法 created:）
+        // Date filter (Gambit syntax created:)
         if (params?.createdAfter && params?.createdBefore) {
-            // 时间范围: created:YYYY-MM-DD..YYYY-MM-DD
+            // Date range: created:YYYY-MM-DD..YYYY-MM-DD
             searchParts.push(`created:${params.createdAfter}..${params.createdBefore}`);
         }
         else if (params?.createdAfter) {
-            // 晚于指定时间: created:>YYYY-MM-DD
+            // After date: created:>YYYY-MM-DD
             searchParts.push(`created:>${params.createdAfter}`);
         }
         else if (params?.createdBefore) {
-            // 早于指定时间: created:<YYYY-MM-DD
+            // Before date: created:<YYYY-MM-DD
             searchParts.push(`created:<${params.createdBefore}`);
         }
-        // 将所有过滤条件组合到 filter[q] 参数
+        // Combine all filters into the filter[q] parameter
         if (searchParts.length > 0) {
             queryParts.push(`filter[q]=${encodeURIComponent(searchParts.join(" "))}`);
         }
-        // 包含用户和标签信息
+        // Include user and tag information
         queryParts.push("include=user,tags,firstPost");
         const query = queryParts.length > 0 ? `?${queryParts.join("&")}` : "";
         const response = await this.request("GET", `/api/discussions${query}`);
         return this.parseDiscussions(response);
     }
     /**
-     * 获取单个讨论
+     * Get a single discussion
      */
     async getDiscussion(id) {
-        const response = await this.request("GET", `/api/discussions/${id}?include=user,tags,firstPost,posts`);
+        const response = await this.request("GET", `/api/discussions/${id}?include=user,tags,firstPost`);
         const discussions = this.parseDiscussions(response);
         if (discussions.length === 0) {
             throw new Error(`Discussion ${id} not found`);
@@ -252,7 +263,7 @@ export class FlarumClient {
         return discussions[0];
     }
     /**
-     * 创建讨论
+     * Create discussion
      */
     async createDiscussion(params) {
         const body = {
@@ -265,7 +276,7 @@ export class FlarumClient {
                 relationships: {},
             },
         };
-        // 添加标签
+        // Add tags
         if (params.tagIds && params.tagIds.length > 0) {
             body.data.relationships = {
                 tags: {
@@ -278,7 +289,7 @@ export class FlarumClient {
         return discussions[0];
     }
     /**
-     * 更新讨论
+     * Update discussion
      */
     async updateDiscussion(id, params) {
         const attributes = {};
@@ -303,17 +314,17 @@ export class FlarumClient {
         return discussions[0];
     }
     /**
-     * 删除讨论
-     * @param id 讨论 ID
-     * @param permanent 是否永久删除（默认 false，使用软删除/隐藏）
+     * Delete discussion
+     * @param id Discussion ID
+     * @param permanent Whether to permanently delete (default false = soft delete/hide)
      */
     async deleteDiscussion(id, permanent = false) {
         if (permanent) {
-            // 永久删除（需要管理员权限）
+            // Permanent deletion (requires admin rights)
             await this.request("DELETE", `/api/discussions/${id}`);
         }
         else {
-            // 软删除/隐藏（普通用户可以对自己的讨论执行）
+            // Soft delete/hide (regular users can do this to their own discussions)
             await this.request("PATCH", `/api/discussions/${id}`, {
                 data: {
                     type: "discussions",
@@ -325,9 +336,9 @@ export class FlarumClient {
             });
         }
     }
-    // ==================== 帖子 API ====================
+    // ==================== Post API ====================
     /**
-     * 获取讨论的帖子列表
+     * Get post list for a discussion
      */
     async getPosts(discussionId, params) {
         const queryParts = [`filter[discussion]=${discussionId}`];
@@ -343,7 +354,7 @@ export class FlarumClient {
         return this.parsePosts(response, discussionId);
     }
     /**
-     * 获取单个帖子
+     * Get a single post
      */
     async getPost(id) {
         const response = await this.request("GET", `/api/posts/${id}?include=user,discussion`);
@@ -354,7 +365,7 @@ export class FlarumClient {
         return posts[0];
     }
     /**
-     * 创建帖子（回复）
+     * Create post (reply)
      */
     async createPost(params) {
         const body = {
@@ -378,7 +389,7 @@ export class FlarumClient {
         return posts[0];
     }
     /**
-     * 更新帖子
+     * Update post
      */
     async updatePost(id, params) {
         const body = {
@@ -395,17 +406,17 @@ export class FlarumClient {
         return posts[0];
     }
     /**
-     * 删除帖子
-     * @param id 帖子 ID
-     * @param permanent 是否永久删除（默认 false，使用软删除/隐藏）
+     * Delete post
+     * @param id Post ID
+     * @param permanent Whether to permanently delete (default false = soft delete/hide)
      */
     async deletePost(id, permanent = false) {
         if (permanent) {
-            // 永久删除（需要管理员权限）
+            // Permanent deletion (requires admin rights)
             await this.request("DELETE", `/api/posts/${id}`);
         }
         else {
-            // 软删除/隐藏（普通用户可以对自己的帖子执行）
+            // Soft delete/hide (regular users can do this to their own posts)
             await this.request("PATCH", `/api/posts/${id}`, {
                 data: {
                     type: "posts",
@@ -417,17 +428,17 @@ export class FlarumClient {
             });
         }
     }
-    // ==================== 标签 API ====================
+    // ==================== Tag API ====================
     /**
-     * 获取所有标签
+     * Get all tags
      */
     async getTags() {
         const response = await this.request("GET", "/api/tags");
         return this.parseTags(response);
     }
-    // ==================== 用户 API ====================
+    // ==================== User API ====================
     /**
-     * 获取用户列表
+     * Get user list
      */
     async getUsers(params) {
         const queryParts = [];
@@ -437,7 +448,7 @@ export class FlarumClient {
         if (params?.offset) {
             queryParts.push(`page[offset]=${params.offset}`);
         }
-        // 搜索用户名或显示名
+        // Search by username or display name
         if (params?.search) {
             queryParts.push(`filter[q]=${encodeURIComponent(params.search)}`);
         }
@@ -446,7 +457,7 @@ export class FlarumClient {
         return this.parseUsers(response);
     }
     /**
-     * 获取单个用户
+     * Get a single user
      */
     async getUser(id) {
         const response = await this.request("GET", `/api/users/${id}`);
@@ -456,18 +467,20 @@ export class FlarumClient {
         }
         return users[0];
     }
-    // ==================== 数据解析方法 ====================
+    // ==================== Data parsing methods ====================
+    buildIncludedMap(included = []) {
+        const map = new Map();
+        for (const item of included) {
+            map.set(`${item.type}:${item.id}`, item);
+        }
+        return map;
+    }
     /**
-     * 解析讨论数据
+     * Parse discussion data
      */
     parseDiscussions(response) {
         const data = Array.isArray(response.data) ? response.data : [response.data];
-        const included = response.included || [];
-        // 建立 included 索引
-        const includedMap = new Map();
-        for (const item of included) {
-            includedMap.set(`${item.type}:${item.id}`, item);
-        }
+        const includedMap = this.buildIncludedMap(response.included);
         return data.map((item) => {
             const discussion = {
                 id: item.id,
@@ -478,7 +491,7 @@ export class FlarumClient {
                 createdAt: item.attributes.createdAt,
                 lastPostedAt: item.attributes.lastPostedAt,
             };
-            // 解析作者
+            // Parse author
             const userRef = item.relationships?.user?.data;
             if (userRef && !Array.isArray(userRef)) {
                 const user = includedMap.get(`users:${userRef.id}`);
@@ -491,7 +504,7 @@ export class FlarumClient {
                     };
                 }
             }
-            // 解析标签
+            // Parse tags
             const tagsRef = item.relationships?.tags?.data;
             if (tagsRef && Array.isArray(tagsRef)) {
                 discussion.tags = tagsRef
@@ -509,7 +522,7 @@ export class FlarumClient {
                 })
                     .filter((t) => t !== null);
             }
-            // 解析首帖
+            // Parse first post
             const firstPostRef = item.relationships?.firstPost?.data;
             if (firstPostRef && !Array.isArray(firstPostRef)) {
                 const post = includedMap.get(`posts:${firstPostRef.id}`);
@@ -526,16 +539,11 @@ export class FlarumClient {
         });
     }
     /**
-     * 解析帖子数据
+     * Parse post data
      */
     parsePosts(response, discussionId) {
         const data = Array.isArray(response.data) ? response.data : [response.data];
-        const included = response.included || [];
-        // 建立 included 索引
-        const includedMap = new Map();
-        for (const item of included) {
-            includedMap.set(`${item.type}:${item.id}`, item);
-        }
+        const includedMap = this.buildIncludedMap(response.included);
         return data.map((item) => {
             const post = {
                 id: item.id,
@@ -546,7 +554,7 @@ export class FlarumClient {
                 editedAt: item.attributes.editedAt,
                 discussionId,
             };
-            // 解析作者
+            // Parse author
             const userRef = item.relationships?.user?.data;
             if (userRef && !Array.isArray(userRef)) {
                 const user = includedMap.get(`users:${userRef.id}`);
@@ -559,7 +567,7 @@ export class FlarumClient {
                     };
                 }
             }
-            // 解析讨论ID
+            // Parse discussion ID
             const discussionRef = item.relationships?.discussion?.data;
             if (discussionRef && !Array.isArray(discussionRef)) {
                 post.discussionId = discussionRef.id;
@@ -568,7 +576,7 @@ export class FlarumClient {
         });
     }
     /**
-     * 解析标签数据
+     * Parse tag data
      */
     parseTags(response) {
         const data = Array.isArray(response.data) ? response.data : [response.data];
@@ -580,7 +588,7 @@ export class FlarumClient {
         }));
     }
     /**
-     * 解析用户数据
+     * Parse user data
      */
     parseUsers(response) {
         const data = Array.isArray(response.data) ? response.data : [response.data];
@@ -595,6 +603,6 @@ export class FlarumClient {
         }));
     }
 }
-// 导出单例实例
+// Export singleton instance
 export const flarumClient = new FlarumClient();
 //# sourceMappingURL=flarum-client.js.map

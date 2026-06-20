@@ -1,6 +1,6 @@
 /**
- * Flarum API 客户端
- * 封装所有与 Flarum 论坛的 HTTP 交互
+ * Flarum API client
+ * Wraps all HTTP interaction with the Flarum forum
  */
 import type { LoginResult, Discussion, Post, Tag, User, ListParams, CreateDiscussionParams, UpdateDiscussionParams, CreatePostParams, UpdatePostParams } from "./types.js";
 export declare class FlarumClient {
@@ -10,119 +10,120 @@ export declare class FlarumClient {
     private cacheFilePath;
     constructor(baseUrl?: string);
     /**
-     * 从文件加载缓存的 Token
+     * Load cached token from file
      */
     loadCachedToken(): boolean;
     /**
-     * 保存 Token 到文件
+     * Save token to file
      */
     private saveCachedToken;
     /**
-     * 清除缓存的 Token
+     * Clear cached token
      */
     clearCachedToken(): void;
     /**
-     * 验证当前 Token 是否有效
+     * Validate whether the current token is valid
      */
     validateToken(): Promise<boolean>;
     /**
-     * 设置认证 Token
+     * Set authentication token
      */
     setToken(token: string, userId?: string): void;
     /**
-     * 获取当前 Token
+     * Get current token
      */
     getToken(): string | null;
     /**
-     * 检查是否已登录
+     * Check whether logged in
      */
     isAuthenticated(): boolean;
     /**
-     * 构建请求头
+     * Build request headers
      */
     private getHeaders;
     /**
-     * 发送 HTTP 请求
+     * Send HTTP request
      */
     private request;
     /**
-     * 登录获取 Token
+     * Login to get token
      */
     login(identification: string, password: string, remember?: boolean): Promise<LoginResult>;
     /**
-     * 登出
+     * Logout
      */
     logout(): void;
     /**
-     * 获取讨论列表
+     * Get discussion list
      */
     getDiscussions(params?: ListParams): Promise<Discussion[]>;
     /**
-     * 获取单个讨论
+     * Get a single discussion
      */
     getDiscussion(id: string): Promise<Discussion>;
     /**
-     * 创建讨论
+     * Create discussion
      */
     createDiscussion(params: CreateDiscussionParams): Promise<Discussion>;
     /**
-     * 更新讨论
+     * Update discussion
      */
     updateDiscussion(id: string, params: UpdateDiscussionParams): Promise<Discussion>;
     /**
-     * 删除讨论
-     * @param id 讨论 ID
-     * @param permanent 是否永久删除（默认 false，使用软删除/隐藏）
+     * Delete discussion
+     * @param id Discussion ID
+     * @param permanent Whether to permanently delete (default false = soft delete/hide)
      */
     deleteDiscussion(id: string, permanent?: boolean): Promise<void>;
     /**
-     * 获取讨论的帖子列表
+     * Get post list for a discussion
      */
     getPosts(discussionId: string, params?: ListParams): Promise<Post[]>;
     /**
-     * 获取单个帖子
+     * Get a single post
      */
     getPost(id: string): Promise<Post>;
     /**
-     * 创建帖子（回复）
+     * Create post (reply)
      */
     createPost(params: CreatePostParams): Promise<Post>;
     /**
-     * 更新帖子
+     * Update post
      */
     updatePost(id: string, params: UpdatePostParams): Promise<Post>;
     /**
-     * 删除帖子
-     * @param id 帖子 ID
-     * @param permanent 是否永久删除（默认 false，使用软删除/隐藏）
+     * Delete post
+     * @param id Post ID
+     * @param permanent Whether to permanently delete (default false = soft delete/hide)
      */
     deletePost(id: string, permanent?: boolean): Promise<void>;
     /**
-     * 获取所有标签
+     * Get all tags
      */
     getTags(): Promise<Tag[]>;
     /**
-     * 获取用户列表
+     * Get user list
      */
     getUsers(params?: ListParams): Promise<User[]>;
     /**
-     * 获取单个用户
+     * Get a single user
      */
     getUser(id: string): Promise<User>;
+    private buildIncludedMap;
     /**
-     * 解析讨论数据
+     * Parse discussion data
      */
     private parseDiscussions;
     /**
-     * 解析帖子数据
+     * Parse post data
      */
     private parsePosts;
     /**
-     * 解析标签数据
+     * Parse tag data
      */
     private parseTags;
     /**
-     * 解析用户数据
+     * Parse user data
      */
     private parseUsers;
 }
