@@ -47,23 +47,6 @@ Remove the server from Claude Code:
 claude mcp remove flarum
 ```
 
-## Configuration
-
-```json
-{
-  "mcpServers": {
-    "flarum": {
-      "command": "flarum-mcp-server",
-      "env": {
-        "FLARUM_BASE_URL": "https://your-forum.com",
-        "FLARUM_USERNAME": "your-email@example.com",
-        "FLARUM_PASSWORD": "your-password"
-      }
-    }
-  }
-}
-```
-
 ## Environment Variables
 
 | Variable | Required | Description |
@@ -94,12 +77,20 @@ claude mcp remove flarum
 | `flarum_update_post` | Update a post |
 | `flarum_delete_post` | Delete/hide a post |
 
-### Users & Tags
+### Users
 
 | Tool | Description |
 |------|-------------|
 | `flarum_list_users` | List users (supports search) |
 | `flarum_get_user` | Get user details |
+| `flarum_create_user` | Create a new user |
+| `flarum_update_user` | Update a user |
+| `flarum_delete_user` | Delete a user |
+
+### Tags
+
+| Tool | Description |
+|------|-------------|
 | `flarum_list_tags` | List all tags |
 
 ### Authentication
