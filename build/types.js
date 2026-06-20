@@ -1,5 +1,5 @@
 /**
- * Flarum API 类型定义
+ * Flarum API type definitions
  */
 export {};
 //# sourceMappingURL=types.js.map

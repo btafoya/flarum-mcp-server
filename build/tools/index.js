@@ -1,30 +1,33 @@
 /**
- * MCP 工具定义和处理
+ * MCP tool definitions and handling
  */
 import { ListToolsRequestSchema, CallToolRequestSchema, } from "@modelcontextprotocol/sdk/types.js";
 import { flarumClient } from "../flarum-client.js";
+function jsonText(value) {
+    return { type: "text", text: JSON.stringify(value, null, 2) };
+}
 /**
- * 工具定义列表
+ * Tool definitions
  */
 const tools = [
-    // ==================== 认证工具 ====================
+    // ==================== Authentication tools ====================
     {
         name: "flarum_login",
-        description: "登录 Flarum 论坛获取访问令牌",
+        description: "Login to the Flarum forum to get an access token",
         inputSchema: {
             type: "object",
             properties: {
                 identification: {
                     type: "string",
-                    description: "用户名或邮箱地址",
+                    description: "Username or email address",
                 },
                 password: {
                     type: "string",
-                    description: "用户密码",
+                    description: "User password",
                 },
                 remember: {
                     type: "boolean",
-                    description: "是否记住登录（延长 Token 有效期至 5 年）",
+                    description: "Whether to remember login (extends token validity to 5 years)",
                     default: false,
                 },
             },
@@ -33,7 +36,7 @@ const tools = [
     },
     {
         name: "flarum_logout",
-        description: "登出 Flarum 论坛，清除当前会话",
+        description: "Logout from the Flarum forum and clear the current session",
         inputSchema: {
             type: "object",
             properties: {},
@@ -41,70 +44,70 @@ const tools = [
     },
     {
         name: "flarum_check_auth",
-        description: "检查当前登录状态",
+        description: "Check current login status",
         inputSchema: {
             type: "object",
             properties: {},
         },
     },
-    // ==================== 讨论工具 ====================
+    // ==================== Discussion tools ====================
     {
         name: "flarum_list_discussions",
-        description: "获取论坛讨论列表，支持按用户、标签过滤",
+        description: "Get forum discussion list, supports filtering by user and tag",
         inputSchema: {
             type: "object",
             properties: {
                 limit: {
                     type: "number",
-                    description: "返回结果数量（1-50）",
+                    description: "Number of results (1-50)",
                     default: 20,
                 },
                 offset: {
                     type: "number",
-                    description: "分页偏移量",
+                    description: "Pagination offset",
                     default: 0,
                 },
                 sort: {
                     type: "string",
-                    description: "排序方式：-lastPostedAt, -createdAt, -commentCount",
+                    description: "Sort order: -lastPostedAt, -createdAt, -commentCount",
                     default: "-lastPostedAt",
                 },
                 search: {
                     type: "string",
-                    description: "搜索关键词",
+                    description: "Search keyword",
                 },
                 userId: {
                     type: "string",
-                    description: "按用户 ID 过滤（获取指定用户发布的讨论）",
+                    description: "Filter by user ID (get discussions posted by the specified user)",
                 },
                 username: {
                     type: "string",
-                    description: "按用户名过滤（获取指定用户发布的讨论）。注意：论坛用户名为中文姓名的拼音全拼（无空格、小写），例如「张三」应转换为「zhangsan」，「王小明」应转换为「wangxiaoming」。如果用户输入中文名，请先转换为拼音再搜索。",
+                    description: "Filter by username (get discussions posted by the specified user). Note: the forum username is the pinyin of Chinese display names (no spaces, lowercase). For example, convert a Chinese display name to its pinyin form. If the user provides a Chinese name, convert it to pinyin before searching.",
                 },
                 tag: {
                     type: "string",
-                    description: "按标签 slug 过滤（获取指定标签下的讨论）",
+                    description: "Filter by tag slug (get discussions under the specified tag)",
                 },
                 createdAfter: {
                     type: "string",
-                    description: "筛选创建时间晚于此日期的讨论（格式：YYYY-MM-DD，例如 2024-01-01）",
+                    description: "Filter discussions created after this date (format: YYYY-MM-DD, e.g. 2024-01-01)",
                 },
                 createdBefore: {
                     type: "string",
-                    description: "筛选创建时间早于此日期的讨论（格式：YYYY-MM-DD，例如 2024-12-31）",
+                    description: "Filter discussions created before this date (format: YYYY-MM-DD, e.g. 2024-12-31)",
                 },
             },
         },
     },
     {
         name: "flarum_get_discussion",
-        description: "获取单个讨论的详细信息",
+        description: "Get detailed information of a single discussion",
         inputSchema: {
             type: "object",
             properties: {
                 id: {
                     type: "string",
-                    description: "讨论 ID",
+                    description: "Discussion ID",
                 },
             },
             required: ["id"],
@@ -112,22 +115,22 @@ const tools = [
     },
     {
         name: "flarum_create_discussion",
-        description: "创建新的讨论主题（需要先登录）",
+        description: "Create a new discussion topic (login required)",
         inputSchema: {
             type: "object",
             properties: {
                 title: {
                     type: "string",
-                    description: "讨论标题",
+                    description: "Discussion title",
                 },
                 content: {
                     type: "string",
-                    description: "讨论内容（支持 Markdown 格式）",
+                    description: "Discussion content (Markdown supported)",
                 },
                 tagIds: {
                     type: "array",
                     items: { type: "string" },
-                    description: "标签 ID 数组",
+                    description: "Tag ID array",
                 },
             },
             required: ["title", "content"],
@@ -135,17 +138,17 @@ const tools = [
     },
     {
         name: "flarum_update_discussion",
-        description: "更新讨论信息（需要先登录，且只能编辑自己的讨论）",
+        description: "Update discussion info (login required, can only edit your own discussions)",
         inputSchema: {
             type: "object",
             properties: {
                 id: {
                     type: "string",
-                    description: "讨论 ID",
+                    description: "Discussion ID",
                 },
                 title: {
                     type: "string",
-                    description: "新的讨论标题",
+                    description: "New discussion title",
                 },
             },
             required: ["id"],
@@ -153,17 +156,17 @@ const tools = [
     },
     {
         name: "flarum_delete_discussion",
-        description: "删除讨论（需要先登录，且只能删除自己的讨论）",
+        description: "Delete discussion (login required, can only delete your own discussions)",
         inputSchema: {
             type: "object",
             properties: {
                 id: {
                     type: "string",
-                    description: "讨论 ID",
+                    description: "Discussion ID",
                 },
                 permanent: {
                     type: "boolean",
-                    description: "是否永久删除（默认 false 为软删除/隐藏，true 需要管理员权限）",
+                    description: "Whether to permanently delete (default false = soft delete/hide, true requires admin rights)",
                     default: false,
                 },
             },
@@ -172,69 +175,69 @@ const tools = [
     },
     {
         name: "flarum_list_tags",
-        description: "获取论坛所有标签",
+        description: "Get all forum tags",
         inputSchema: {
             type: "object",
             properties: {},
         },
     },
-    // ==================== 用户工具 ====================
+    // ==================== User tools ====================
     {
         name: "flarum_list_users",
-        description: "获取论坛用户列表",
+        description: "Get forum user list",
         inputSchema: {
             type: "object",
             properties: {
                 limit: {
                     type: "number",
-                    description: "返回结果数量（1-50）",
+                    description: "Number of results (1-50)",
                     default: 20,
                 },
                 offset: {
                     type: "number",
-                    description: "分页偏移量",
+                    description: "Pagination offset",
                     default: 0,
                 },
                 search: {
                     type: "string",
-                    description: "搜索关键词（匹配用户名或显示名）",
+                    description: "Search keyword (matches username or display name)",
                 },
             },
         },
     },
     {
         name: "flarum_get_user",
-        description: "获取单个用户的详细信息",
+        description: "Get detailed information of a single user",
         inputSchema: {
             type: "object",
             properties: {
                 id: {
                     type: "string",
-                    description: "用户 ID",
+                    description: "User ID",
                 },
             },
             required: ["id"],
         },
     },
-    // ==================== 帖子工具 ====================
+    // ==================== Post tools ====================
     {
         name: "flarum_list_posts",
-        description: "获取指定讨论的所有回复",
+        description: "Get all replies in the specified discussion",
         inputSchema: {
             type: "object",
             properties: {
                 discussionId: {
                     type: "string",
-                    description: "讨论 ID",
+                    description: "Discussion ID",
                 },
                 limit: {
                     type: "number",
-                    description: "返回结果数量（1-50）",
+                    description: "Number of results (1-50)",
                     default: 20,
                 },
                 offset: {
                     type: "number",
-                    description: "分页偏移量",
+                    description: "Pagination offset",
                     default: 0,
                 },
             },
@@ -243,13 +246,13 @@ const tools = [
     },
     {
         name: "flarum_get_post",
-        description: "获取单个帖子的详细信息",
+        description: "Get detailed information of a single post",
         inputSchema: {
             type: "object",
             properties: {
                 id: {
                     type: "string",
-                    description: "帖子 ID",
+                    description: "Post ID",
                 },
             },
             required: ["id"],
@@ -257,17 +260,17 @@ const tools = [
     },
     {
         name: "flarum_create_post",
-        description: "在讨论中创建新的回复（需要先登录）",
+        description: "Create a new reply in a discussion (login required)",
         inputSchema: {
             type: "object",
             properties: {
                 discussionId: {
                     type: "string",
-                    description: "讨论 ID",
+                    description: "Discussion ID",
                 },
                 content: {
                     type: "string",
-                    description: "回复内容（支持 Markdown 格式）",
+                    description: "Reply content (Markdown supported)",
                 },
             },
             required: ["discussionId", "content"],
@@ -275,17 +278,17 @@ const tools = [
     },
     {
         name: "flarum_update_post",
-        description: "更新帖子内容（需要先登录，且只能编辑自己的帖子）",
+        description: "Update post content (login required, can only edit your own posts)",
         inputSchema: {
             type: "object",
             properties: {
                 id: {
                     type: "string",
-                    description: "帖子 ID",
+                    description: "Post ID",
                 },
                 content: {
                     type: "string",
-                    description: "新的帖子内容（支持 Markdown 格式）",
+                    description: "New post content (Markdown supported)",
                 },
             },
             required: ["id", "content"],
@@ -293,17 +296,17 @@ const tools = [
     },
     {
         name: "flarum_delete_post",
-        description: "删除帖子（需要先登录，且只能删除自己的帖子）",
+        description: "Delete post (login required, can only delete your own posts)",
         inputSchema: {
             type: "object",
             properties: {
                 id: {
                     type: "string",
-                    description: "帖子 ID",
+                    description: "Post ID",
                 },
                 permanent: {
                     type: "boolean",
-                    description: "是否永久删除（默认 false 为软删除/隐藏，true 需要管理员权限）",
+                    description: "Whether to permanently delete (default false = soft delete/hide, true requires admin rights)",
                     default: false,
                 },
             },
@@ -312,51 +315,41 @@ const tools = [
     },
 ];
 /**
- * 工具调用处理器
+ * Tool call handler
  */
 async function handleToolCall(name, args) {
     try {
         switch (name) {
-            // ==================== 认证工具 ====================
+            // ==================== Authentication tools ====================
             case "flarum_login": {
                 const result = await flarumClient.login(args.identification, args.password, args.remember);
                 return {
-                    content: [
-                        {
-                            type: "text",
-                            text: JSON.stringify({
-                                success: true,
-                                message: "登录成功",
-                                userId: result.userId,
-                                tokenPreview: `${result.token.substring(0, 8)}...`,
-                            }, null, 2),
-                        },
-                    ],
+                    content: [jsonText({
+                            success: true,
+                            message: "Login successful",
+                            userId: result.userId,
+                            tokenPreview: `${result.token.substring(0, 8)}...`,
+                        })],
                 };
             }
             case "flarum_logout": {
                 flarumClient.logout();
                 return {
-                    content: [{ type: "text", text: "已成功登出" }],
+                    content: [{ type: "text", text: "Logged out successfully" }],
                 };
             }
             case "flarum_check_auth": {
                 const isAuthenticated = flarumClient.isAuthenticated();
                 return {
-                    content: [
-                        {
-                            type: "text",
-                            text: JSON.stringify({
-                                isAuthenticated,
-                                message: isAuthenticated
-                                    ? "已登录，可以执行需要认证的操作"
-                                    : "未登录，请先使用 flarum_login 工具登录",
-                            }, null, 2),
-                        },
-                    ],
+                    content: [jsonText({
+                            isAuthenticated,
+                            message: isAuthenticated
+                                ? "Logged in, authenticated operations are allowed"
+                                : "Not logged in, please use the flarum_login tool first",
+                        })],
                 };
             }
-            // ==================== 讨论工具 ====================
+            // ==================== Discussion tools ====================
             case "flarum_list_discussions": {
                 const discussions = await flarumClient.getDiscussions({
                     limit: args.limit || 20,
@@ -372,52 +365,42 @@ async function handleToolCall(name, args) {
                 const formatted = discussions.map((d) => ({
                     id: d.id,
                     title: d.title,
-                    author: d.author?.displayName || "未知",
+                    author: d.author?.displayName || "Unknown",
                     commentCount: d.commentCount,
                     createdAt: d.createdAt,
                     lastPostedAt: d.lastPostedAt,
                     tags: d.tags?.map((t) => t.name).join(", ") || "",
                 }));
                 return {
-                    content: [
-                        {
-                            type: "text",
-                            text: JSON.stringify({ total: formatted.length, discussions: formatted }, null, 2),
-                        },
-                    ],
+                    content: [jsonText({ total: formatted.length, discussions: formatted })],
                 };
             }
             case "flarum_get_discussion": {
                 const discussion = await flarumClient.getDiscussion(args.id);
                 return {
-                    content: [
-                        {
-                            type: "text",
-                            text: JSON.stringify({
-                                id: discussion.id,
-                                title: discussion.title,
-                                author: discussion.author?.displayName || "未知",
-                                commentCount: discussion.commentCount,
-                                participantCount: discussion.participantCount,
-                                createdAt: discussion.createdAt,
-                                lastPostedAt: discussion.lastPostedAt,
-                                tags: discussion.tags?.map((t) => t.name) || [],
-                                firstPost: discussion.firstPost
-                                    ? {
-                                        id: discussion.firstPost.id,
-                                        content: discussion.firstPost.content,
-                                    }
-                                    : null,
-                            }, null, 2),
-                        },
-                    ],
+                    content: [jsonText({
+                            id: discussion.id,
+                            title: discussion.title,
+                            author: discussion.author?.displayName || "Unknown",
+                            commentCount: discussion.commentCount,
+                            participantCount: discussion.participantCount,
+                            createdAt: discussion.createdAt,
+                            lastPostedAt: discussion.lastPostedAt,
+                            tags: discussion.tags?.map((t) => t.name) || [],
+                            firstPost: discussion.firstPost
+                                ? {
+                                    id: discussion.firstPost.id,
+                                    content: discussion.firstPost.content,
+                                }
+                                : null,
+                        })],
                 };
             }
             case "flarum_create_discussion": {
                 if (!flarumClient.isAuthenticated()) {
                     return {
                         content: [
-                            { type: "text", text: "错误：请先使用 flarum_login 工具登录" },
+                            { type: "text", text: "Error: please use the flarum_login tool first" },
                         ],
                         isError: true,
                     };
@@ -428,54 +411,44 @@ async function handleToolCall(name, args) {
                     tagIds: args.tagIds,
                 });
                 return {
-                    content: [
-                        {
-                            type: "text",
-                            text: JSON.stringify({
-                                success: true,
-                                message: "讨论创建成功",
-                                discussion: {
-                                    id: discussion.id,
-                                    title: discussion.title,
-                                    slug: discussion.slug,
-                                    createdAt: discussion.createdAt,
-                                },
-                            }, null, 2),
-                        },
-                    ],
+                    content: [jsonText({
+                            success: true,
+                            message: "Discussion created successfully",
+                            discussion: {
+                                id: discussion.id,
+                                title: discussion.title,
+                                slug: discussion.slug,
+                                createdAt: discussion.createdAt,
+                            },
+                        })],
                 };
             }
             case "flarum_update_discussion": {
                 if (!flarumClient.isAuthenticated()) {
                     return {
                         content: [
-                            { type: "text", text: "错误：请先使用 flarum_login 工具登录" },
+                            { type: "text", text: "Error: please use the flarum_login tool first" },
                         ],
                         isError: true,
                     };
                 }
                 const updatedDiscussion = await flarumClient.updateDiscussion(args.id, { title: args.title });
                 return {
-                    content: [
-                        {
-                            type: "text",
-                            text: JSON.stringify({
-                                success: true,
-                                message: "讨论更新成功",
-                                discussion: {
-                                    id: updatedDiscussion.id,
-                                    title: updatedDiscussion.title,
-                                },
-                            }, null, 2),
-                        },
-                    ],
+                    content: [jsonText({
+                            success: true,
+                            message: "Discussion updated successfully",
+                            discussion: {
+                                id: updatedDiscussion.id,
+                                title: updatedDiscussion.title,
+                            },
+                        })],
                 };
             }
             case "flarum_delete_discussion": {
                 if (!flarumClient.isAuthenticated()) {
                     return {
                         content: [
-                            { type: "text", text: "错误：请先使用 flarum_login 工具登录" },
+                            { type: "text", text: "Error: please use the flarum_login tool first" },
                         ],
                         isError: true,
                     };
@@ -483,39 +456,29 @@ async function handleToolCall(name, args) {
                 const permanentDiscussion = args.permanent || false;
                 await flarumClient.deleteDiscussion(args.id, permanentDiscussion);
                 return {
-                    content: [
-                        {
-                            type: "text",
-                            text: JSON.stringify({
-                                success: true,
-                                message: permanentDiscussion
-                                    ? `讨论 ${args.id} 已永久删除`
-                                    : `讨论 ${args.id} 已隐藏（软删除）`,
-                            }, null, 2),
-                        },
-                    ],
+                    content: [jsonText({
+                            success: true,
+                            message: permanentDiscussion
+                                ? `Discussion ${args.id} permanently deleted`
+                                : `Discussion ${args.id} hidden (soft deleted)`,
+                        })],
                 };
             }
             case "flarum_list_tags": {
                 const tags = await flarumClient.getTags();
                 return {
-                    content: [
-                        {
-                            type: "text",
-                            text: JSON.stringify({
-                                total: tags.length,
-                                tags: tags.map((t) => ({
-                                    id: t.id,
-                                    name: t.name,
-                                    slug: t.slug,
-                                    color: t.color,
-                                })),
-                            }, null, 2),
-                        },
-                    ],
+                    content: [jsonText({
+                            total: tags.length,
+                            tags: tags.map((t) => ({
+                                id: t.id,
+                                name: t.name,
+                                slug: t.slug,
+                                color: t.color,
+                            })),
+                        })],
                 };
             }
-            // ==================== 用户工具 ====================
+            // ==================== User tools ====================
             case "flarum_list_users": {
                 const users = await flarumClient.getUsers({
                     limit: args.limit || 20,
@@ -531,34 +494,24 @@ async function handleToolCall(name, args) {
                     commentCount: u.commentCount,
                 }));
                 return {
-                    content: [
-                        {
-                            type: "text",
-                            text: JSON.stringify({ total: formattedUsers.length, users: formattedUsers }, null, 2),
-                        },
-                    ],
+                    content: [jsonText({ total: formattedUsers.length, users: formattedUsers })],
                 };
             }
             case "flarum_get_user": {
                 const user = await flarumClient.getUser(args.id);
                 return {
-                    content: [
-                        {
-                            type: "text",
-                            text: JSON.stringify({
-                                id: user.id,
-                                username: user.username,
-                                displayName: user.displayName,
-                                avatarUrl: user.avatarUrl,
-                                joinTime: user.joinTime,
-                                discussionCount: user.discussionCount,
-                                commentCount: user.commentCount,
-                            }, null, 2),
-                        },
-                    ],
+                    content: [jsonText({
+                            id: user.id,
+                            username: user.username,
+                            displayName: user.displayName,
+                            avatarUrl: user.avatarUrl,
+                            joinTime: user.joinTime,
+                            discussionCount: user.discussionCount,
+                            commentCount: user.commentCount,
+                        })],
                 };
             }
-            // ==================== 帖子工具 ====================
+            // ==================== Post tools ====================
             case "flarum_list_posts": {
                 const posts = await flarumClient.getPosts(args.discussionId, {
                     limit: args.limit || 20,
@@ -567,49 +520,39 @@ async function handleToolCall(name, args) {
                 const formattedPosts = posts.map((p) => ({
                     id: p.id,
                     number: p.number,
-                    author: p.author?.displayName || "未知",
+                    author: p.author?.displayName || "Unknown",
                     content: p.content,
                     createdAt: p.createdAt,
                     editedAt: p.editedAt,
                 }));
                 return {
-                    content: [
-                        {
-                            type: "text",
-                            text: JSON.stringify({
-                                discussionId: args.discussionId,
-                                total: formattedPosts.length,
-                                posts: formattedPosts,
-                            }, null, 2),
-                        },
-                    ],
+                    content: [jsonText({
+                            discussionId: args.discussionId,
+                            total: formattedPosts.length,
+                            posts: formattedPosts,
+                        })],
                 };
             }
             case "flarum_get_post": {
                 const post = await flarumClient.getPost(args.id);
                 return {
-                    content: [
-                        {
-                            type: "text",
-                            text: JSON.stringify({
-                                id: post.id,
-                                number: post.number,
-                                author: post.author?.displayName || "未知",
-                                content: post.content,
-                                contentHtml: post.contentHtml,
-                                createdAt: post.createdAt,
-                                editedAt: post.editedAt,
-                                discussionId: post.discussionId,
-                            }, null, 2),
-                        },
-                    ],
+                    content: [jsonText({
+                            id: post.id,
+                            number: post.number,
+                            author: post.author?.displayName || "Unknown",
+                            content: post.content,
+                            contentHtml: post.contentHtml,
+                            createdAt: post.createdAt,
+                            editedAt: post.editedAt,
+                            discussionId: post.discussionId,
+                        })],
                 };
             }
             case "flarum_create_post": {
                 if (!flarumClient.isAuthenticated()) {
                     return {
                         content: [
-                            { type: "text", text: "错误：请先使用 flarum_login 工具登录" },
+                            { type: "text", text: "Error: please use the flarum_login tool first" },
                         ],
                         isError: true,
                     };
@@ -619,27 +562,22 @@ async function handleToolCall(name, args) {
                     content: args.content,
                 });
                 return {
-                    content: [
-                        {
-                            type: "text",
-                            text: JSON.stringify({
-                                success: true,
-                                message: "回复创建成功",
-                                post: {
-                                    id: newPost.id,
-                                    number: newPost.number,
-                                    createdAt: newPost.createdAt,
-                                },
-                            }, null, 2),
-                        },
-                    ],
+                    content: [jsonText({
+                            success: true,
+                            message: "Reply created successfully",
+                            post: {
+                                id: newPost.id,
+                                number: newPost.number,
+                                createdAt: newPost.createdAt,
+                            },
+                        })],
                 };
             }
             case "flarum_update_post": {
                 if (!flarumClient.isAuthenticated()) {
                     return {
                         content: [
-                            { type: "text", text: "错误：请先使用 flarum_login 工具登录" },
+                            { type: "text", text: "Error: please use the flarum_login tool first" },
                         ],
                         isError: true,
                     };
@@ -648,27 +586,22 @@ async function handleToolCall(name, args) {
                     content: args.content,
                 });
                 return {
-                    content: [
-                        {
-                            type: "text",
-                            text: JSON.stringify({
-                                success: true,
-                                message: "帖子更新成功",
-                                post: {
-                                    id: updatedPost.id,
-                                    number: updatedPost.number,
-                                    editedAt: updatedPost.editedAt,
-                                },
-                            }, null, 2),
-                        },
-                    ],
+                    content: [jsonText({
+                            success: true,
+                            message: "Post updated successfully",
+                            post: {
+                                id: updatedPost.id,
+                                number: updatedPost.number,
+                                editedAt: updatedPost.editedAt,
+                            },
+                        })],
                 };
             }
             case "flarum_delete_post": {
                 if (!flarumClient.isAuthenticated()) {
                     return {
                         content: [
-                            { type: "text", text: "错误：请先使用 flarum_login 工具登录" },
+                            { type: "text", text: "Error: please use the flarum_login tool first" },
                         ],
                         isError: true,
                     };
@@ -676,21 +609,16 @@ async function handleToolCall(name, args) {
                 const permanent = args.permanent || false;
                 await flarumClient.deletePost(args.id, permanent);
                 return {
-                    content: [
-                        {
-                            type: "text",
-                            text: JSON.stringify({
-                                success: true,
-                                message: permanent
-                                    ? `帖子 ${args.id} 已永久删除`
-                                    : `帖子 ${args.id} 已隐藏（软删除）`,
-                            }, null, 2),
-                        },
-                    ],
+                    content: [jsonText({
+                            success: true,
+                            message: permanent
+                                ? `Post ${args.id} permanently deleted`
+                                : `Post ${args.id} hidden (soft deleted)`,
+                        })],
                 };
             }
             default:
-                throw new Error(`未知工具: ${name}`);
+                throw new Error(`Unknown tool: ${name}`);
         }
     }
     catch (error) {
@@ -698,7 +626,7 @@ async function handleToolCall(name, args) {
             content: [
                 {
                     type: "text",
-                    text: `操作失败: ${error instanceof Error ? error.message : String(error)}`,
+                    text: `Operation failed: ${error instanceof Error ? error.message : String(error)}`,
                 },
             ],
             isError: true,
@@ -706,14 +634,14 @@ async function handleToolCall(name, args) {
     }
 }
 /**
- * 注册所有 MCP 工具
+ * Register all MCP tools
  */
 export function registerTools(server) {
-    // 列出工具
+    // List tools
     server.setRequestHandler(ListToolsRequestSchema, async () => {
         return { tools };
     });
-    // 处理工具调用
+    // Handle tool calls
     server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const { name, arguments: args } = request.params;
         return handleToolCall(name, (args || {}));

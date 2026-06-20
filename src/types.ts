@@ -1,8 +1,8 @@
 /**
- * Flarum API 类型定义
+ * Flarum API type definitions
  */
 
-// JSON:API 通用类型
+// JSON:API common types
 export interface JsonApiResource<T = Record<string, unknown>> {
   type: string;
   id: string;
@@ -36,13 +36,13 @@ export interface JsonApiErrorResponse {
   errors: JsonApiError[];
 }
 
-// 登录相关
+// Authentication
 export interface LoginResult {
   token: string;
   userId: string;
 }
 
-// 用户
+// User
 export interface UserAttributes {
   username: string;
   displayName: string;
@@ -64,7 +64,7 @@ export interface User {
   commentCount?: number;
 }
 
-// 讨论
+// Discussion
 export interface DiscussionAttributes {
   title: string;
   slug: string;
@@ -106,7 +106,7 @@ export interface Discussion {
   };
 }
 
-// 帖子
+// Post
 export interface PostAttributes {
   number: number;
   contentType: string;
@@ -134,7 +134,7 @@ export interface Post {
   discussionId?: string;
 }
 
-// 标签
+// Tag
 export interface TagAttributes {
   name: string;
   description: string;
@@ -154,42 +154,42 @@ export interface Tag {
   color: string;
 }
 
-// 列表参数
+// List parameters
 export interface ListParams {
   limit?: number;
   offset?: number;
   sort?: string;
   search?: string;
-  // 过滤参数
-  userId?: string;      // 按用户 ID 过滤
-  username?: string;    // 按用户名过滤
-  tag?: string;         // 按标签 slug 过滤
-  // 时间过滤参数
-  createdAfter?: string;  // 创建时间晚于（格式：YYYY-MM-DD）
-  createdBefore?: string; // 创建时间早于（格式：YYYY-MM-DD）
+  // Filter parameters
+  userId?: string;      // Filter by user ID
+  username?: string;    // Filter by username
+  tag?: string;         // Filter by tag slug
+  // Date filter parameters
+  createdAfter?: string;  // Created after (format: YYYY-MM-DD)
+  createdBefore?: string; // Created before (format: YYYY-MM-DD)
 }
 
-// 创建讨论参数
+// Create discussion parameters
 export interface CreateDiscussionParams {
   title: string;
   content: string;
   tagIds?: string[];
 }
 
-// 更新讨论参数
+// Update discussion parameters
 export interface UpdateDiscussionParams {
   title?: string;
   isSticky?: boolean;
   isLocked?: boolean;
 }
 
-// 创建帖子参数
+// Create post parameters
 export interface CreatePostParams {
   discussionId: string;
   content: string;
 }
 
-// 更新帖子参数
+// Update post parameters
 export interface UpdatePostParams {
   content: string;
 }

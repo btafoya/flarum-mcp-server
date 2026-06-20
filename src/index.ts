@@ -3,12 +3,12 @@
 /**
  * Flarum MCP Server
  *
- * 提供对 Flarum 论坛的增删改查操作
+ * Provides CRUD operations for Flarum forums
  *
- * 环境变量：
- * - FLARUM_BASE_URL: Flarum 论坛的 URL（默认：http://localhost）
- * - FLARUM_USERNAME: 用户名或邮箱（可选，用于自动登录）
- * - FLARUM_PASSWORD: 密码（可选，用于自动登录）
+ * Environment variables:
+ * - FLARUM_BASE_URL: Flarum forum URL (default: http://localhost)
+ * - FLARUM_USERNAME: Username or email (optional, used for auto-login)
+ * - FLARUM_PASSWORD: Password (optional, used for auto-login)
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -16,7 +16,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { registerTools } from "./tools/index.js";
 import { flarumClient } from "./flarum-client.js";
 
-// 创建 MCP 服务器
+// Create MCP server
 const server = new Server(
   {
     name: "flarum-mcp-server",
@@ -29,55 +29,55 @@ const server = new Server(
   }
 );
 
-// 注册所有工具
+// Register all tools
 registerTools(server);
 
-// 自动登录（优先使用缓存的 Token）
+// Auto-login (prefer cached token)
 async function autoLogin(): Promise<void> {
-  // 1. 尝试加载缓存的 Token
+  // 1. Try loading cached token
   if (flarumClient.loadCachedToken()) {
-    console.error("发现缓存的 Token，正在验证...");
+    console.error("Cached token found, validating...");
 
-    // 验证 Token 是否有效
+    // Validate token
     const isValid = await flarumClient.validateToken();
     if (isValid) {
-      console.error("✓ 使用缓存的 Token 登录成功");
+      console.error("✓ Login succeeded using cached token");
       return;
     } else {
-      console.error("缓存的 Token 已失效，尝试重新登录...");
+      console.error("Cached token expired, trying to re-login...");
     }
   }
 
-  // 2. 如果没有有效缓存，使用环境变量登录
+  // 2. If no valid cache, login with environment variables
   const username = process.env.FLARUM_USERNAME;
   const password = process.env.FLARUM_PASSWORD;
 
   if (username && password) {
     try {
       const result = await flarumClient.login(username, password, true);
-      console.error(`✓ 登录成功，用户ID: ${result.userId}`);
+      console.error(`✓ Login successful，UserID: ${result.userId}`);
     } catch (error) {
-      console.error(`✗ 登录失败: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(`✗ Login failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 }
 
-// 启动服务器
+// Start server
 async function main(): Promise<void> {
-  console.error("Flarum MCP Server 正在启动...");
-  console.error(`论坛地址: ${process.env.FLARUM_BASE_URL || "http://localhost"}`);
+  console.error("Flarum MCP Server starting...");
+  console.error(`Forum URL: ${process.env.FLARUM_BASE_URL || "http://localhost"}`);
 
-  // 尝试自动登录
+  // Attempting auto-login
   await autoLogin();
 
-  // 连接传输层
+  // Connect transport
   const transport = new StdioServerTransport();
   await server.connect(transport);
 
-  console.error("Flarum MCP Server 已就绪");
+  console.error("Flarum MCP Server ready");
 }
 
 main().catch((error) => {
-  console.error("服务器启动失败:", error);
+  console.error("Server failed to start:", error);
   process.exit(1);
 });

@@ -1,5 +1,5 @@
 /**
- * Flarum API 类型定义
+ * Flarum API type definitions
  */
 export interface JsonApiResource<T = Record<string, unknown>> {
     type: string;

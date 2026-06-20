@@ -1,9 +1,9 @@
 /**
- * MCP 工具定义和处理
+ * MCP tool definitions and handling
  */
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 /**
- * 注册所有 MCP 工具
+ * Register all MCP tools
  */
 export declare function registerTools(server: Server): void;
 //# sourceMappingURL=index.d.ts.map
