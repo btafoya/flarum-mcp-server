@@ -1,6 +1,6 @@
 {
-  "name": "flarum-mcp-server",
-  "version": "1.0.1",
+  "name": "@btafoya/flarum-mcp-server",
+  "version": "1.0.0",
   "description": "MCP server for Flarum forum - CRUD operations for discussions, posts, users, and tags",
   "type": "module",
   "main": "build/index.js",
@@ -22,15 +22,15 @@
     "anthropic",
     "model-context-protocol"
   ],
-  "author": "wangxiaobo775",
+  "author": "Brian Tafoya <btafoya@briantafoya.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/wangxiaobo775/flarum-mcp-server"
+    "url": "https://github.com/btafoya/flarum-mcp-server.git"
   },
-  "homepage": "https://github.com/wangxiaobo775/flarum-mcp-server#readme",
+  "homepage": "https://github.com/btafoya/flarum-mcp-server#readme",
   "bugs": {
-    "url": "https://github.com/wangxiaobo775/flarum-mcp-server/issues"
+    "url": "https://github.com/btafoya/flarum-mcp-server/issues"
   },
   "files": [
     "build/**/*"

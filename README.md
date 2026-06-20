@@ -7,13 +7,13 @@ A [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server for [F
 ### Global install (recommended)
 
 ```bash
-npm install -g flarum-mcp-server
+npm install -g @btafoya/flarum-mcp-server
 ```
 
 ### npx (no install)
 
 ```bash
-npx flarum-mcp-server
+npx @btafoya/flarum-mcp-server
 ```
 
 ## Claude Code CLI
@@ -127,7 +127,7 @@ In Claude Code, you can say:
 
 ```bash
 # Clone and install dependencies
-git clone https://github.com/wangxiaobo775/flarum-mcp-server.git
+git clone https://github.com/btafoya/flarum-mcp-server.git
 cd flarum-mcp-server
 npm install
 
