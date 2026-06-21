@@ -588,6 +588,14 @@ async function handleToolCall(name, args) {
             }
             // ==================== User tools ====================
             case "flarum_list_users": {
+                if (!flarumClient.isAuthenticated()) {
+                    return {
+                        content: [
+                            { type: "text", text: "Error: please use the flarum_login tool first" },
+                        ],
+                        isError: true,
+                    };
+                }
                 const users = await flarumClient.getUsers({
                     limit: args.limit || 20,
                     offset: args.offset || 0,
@@ -606,6 +614,14 @@ async function handleToolCall(name, args) {
                 };
             }
             case "flarum_get_user": {
+                if (!flarumClient.isAuthenticated()) {
+                    return {
+                        content: [
+                            { type: "text", text: "Error: please use the flarum_login tool first" },
+                        ],
+                        isError: true,
+                    };
+                }
                 const user = await flarumClient.getUser(args.id);
                 return {
                     content: [jsonText({
