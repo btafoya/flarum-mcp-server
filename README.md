@@ -13,7 +13,7 @@ npm install -g @btafoya/flarum-mcp-server
 ### npx (no install)
 
 ```bash
-npx @btafoya/flarum-mcp-server
+claude mcp add flarum -e FLARUM_BASE_URL=https://your-forum.com -e FLARUM_USERNAME=your-email@example.com -e FLARUM_PASSWORD=your-password -- npx @btafoya/flarum-mcp-server
 ```
 
 ## Claude Code CLI
@@ -21,7 +21,7 @@ npx @btafoya/flarum-mcp-server
 Add the server to Claude Code:
 
 ```bash
-claude mcp add flarum --json '{"command":"flarum-mcp-server","env":{"FLARUM_BASE_URL":"https://your-forum.com","FLARUM_USERNAME":"your-email@example.com","FLARUM_PASSWORD":"your-password"}}'
+claude mcp add flarum -e FLARUM_BASE_URL=https://your-forum.com -e FLARUM_USERNAME=your-email@example.com -e FLARUM_PASSWORD=your-password -- flarum-mcp-server
 ```
 
 Or edit `~/.claude/settings.json` directly:
