@@ -2,7 +2,7 @@
  * Flarum API client
  * Wraps all HTTP interaction with the Flarum forum
  */
-import type { LoginResult, Discussion, Post, Tag, User, ListParams, CreateDiscussionParams, UpdateDiscussionParams, CreatePostParams, UpdatePostParams, CreateUserParams, UpdateUserParams } from "./types.js";
+import type { LoginResult, Discussion, Post, Tag, User, ListParams, CreateDiscussionParams, UpdateDiscussionParams, CreatePostParams, UpdatePostParams, CreateUserParams, UpdateUserParams, CreateTagParams, UpdateTagParams } from "./types.js";
 export declare class FlarumClient {
     private baseUrl;
     private token;
@@ -105,6 +105,19 @@ export declare class FlarumClient {
      * Get all tags
      */
     getTags(): Promise<Tag[]>;
+    /**
+     * Create a new tag (category)
+     */
+    createTag(params: CreateTagParams): Promise<Tag>;
+    /**
+     * Update an existing tag (category)
+     */
+    updateTag(id: string, params: UpdateTagParams): Promise<Tag>;
+    /**
+     * Delete a tag (category)
+     * @param id Tag ID
+     */
+    deleteTag(id: string): Promise<void>;
     /**
      * Get user list
      */

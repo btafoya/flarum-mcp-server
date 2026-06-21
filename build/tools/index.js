@@ -199,6 +199,116 @@ const tools = [
             properties: {},
         },
     },
+    {
+        name: "flarum_create_tag",
+        title: "Create Tag",
+        description: "Create a new forum tag or category (login and admin permissions required)",
+        annotations: { openWorldHint: true },
+        inputSchema: {
+            type: "object",
+            properties: {
+                name: {
+                    type: "string",
+                    description: "Tag or category name",
+                },
+                slug: {
+                    type: "string",
+                    description: "URL slug (optional, derived from name if omitted)",
+                },
+                description: {
+                    type: "string",
+                    description: "Tag or category description",
+                },
+                color: {
+                    type: "string",
+                    description: "Color hex code, e.g. #ff0000",
+                },
+                icon: {
+                    type: "string",
+                    description: "Font Awesome icon class, e.g. fas fa-star",
+                },
+                isHidden: {
+                    type: "boolean",
+                    description: "Whether the tag is hidden from the forum index",
+                    default: false,
+                },
+                isRestricted: {
+                    type: "boolean",
+                    description: "Whether the tag is restricted to specific groups",
+                    default: false,
+                },
+                parentId: {
+                    type: "string",
+                    description: "Parent tag ID to create this as a sub-category",
+                },
+            },
+            required: ["name"],
+        },
+    },
+    {
+        name: "flarum_update_tag",
+        title: "Update Tag",
+        description: "Update an existing forum tag or category (login and admin permissions required)",
+        annotations: { openWorldHint: true },
+        inputSchema: {
+            type: "object",
+            properties: {
+                id: {
+                    type: "string",
+                    description: "Tag ID",
+                },
+                name: {
+                    type: "string",
+                    description: "New tag or category name",
+                },
+                slug: {
+                    type: "string",
+                    description: "New URL slug",
+                },
+                description: {
+                    type: "string",
+                    description: "New description",
+                },
+                color: {
+                    type: "string",
+                    description: "New color hex code",
+                },
+                icon: {
+                    type: "string",
+                    description: "New Font Awesome icon class",
+                },
+                isHidden: {
+                    type: "boolean",
+                    description: "Whether the tag is hidden",
+                },
+                isRestricted: {
+                    type: "boolean",
+                    description: "Whether the tag is restricted",
+                },
+                parentId: {
+                    type: "string",
+                    description: "Parent tag ID (set empty string to remove parent)",
+                },
+            },
+            required: ["id"],
+        },
+    },
+    {
+        name: "flarum_delete_tag",
+        title: "Delete Tag",
+        description: "Delete a forum tag or category permanently (login and admin permissions required)",
+        annotations: { destructiveHint: true, openWorldHint: true },
+        inputSchema: {
+            type: "object",
+            properties: {
+                id: {
+                    type: "string",
+                    description: "Tag ID",
+                },
+            },
+            required: ["id"],
+        },
+    },
     // ==================== User tools ====================
     {
         name: "flarum_list_users",
@@ -581,8 +691,111 @@ async function handleToolCall(name, args) {
                                 id: t.id,
                                 name: t.name,
                                 slug: t.slug,
+                                description: t.description,
                                 color: t.color,
+                                icon: t.icon,
+                                isHidden: t.isHidden,
+                                isRestricted: t.isRestricted,
+                                parentId: t.parentId,
+                                parentName: t.parent?.name,
+                                children: t.children?.map((c) => ({
+                                    id: c.id,
+                                    name: c.name,
+                                    slug: c.slug,
+                                })),
                             })),
+                        })],
+                };
+            }
+            case "flarum_create_tag": {
+                if (!flarumClient.isAuthenticated()) {
+                    return {
+                        content: [
+                            { type: "text", text: "Error: please use the flarum_login tool first" },
+                        ],
+                        isError: true,
+                    };
+                }
+                const tag = await flarumClient.createTag({
+                    name: args.name,
+                    slug: args.slug,
+                    description: args.description,
+                    color: args.color,
+                    icon: args.icon,
+                    isHidden: args.isHidden,
+                    isRestricted: args.isRestricted,
+                    parentId: args.parentId,
+                });
+                return {
+                    content: [jsonText({
+                            success: true,
+                            message: "Tag created successfully",
+                            tag: {
+                                id: tag.id,
+                                name: tag.name,
+                                slug: tag.slug,
+                                description: tag.description,
+                                color: tag.color,
+                                icon: tag.icon,
+                                isHidden: tag.isHidden,
+                                isRestricted: tag.isRestricted,
+                                parentId: tag.parentId,
+                            },
+                        })],
+                };
+            }
+            case "flarum_update_tag": {
+                if (!flarumClient.isAuthenticated()) {
+                    return {
+                        content: [
+                            { type: "text", text: "Error: please use the flarum_login tool first" },
+                        ],
+                        isError: true,
+                    };
+                }
+                const parentIdInput = args.parentId;
+                const updatedTag = await flarumClient.updateTag(args.id, {
+                    name: args.name,
+                    slug: args.slug,
+                    description: args.description,
+                    color: args.color,
+                    icon: args.icon,
+                    isHidden: args.isHidden,
+                    isRestricted: args.isRestricted,
+                    parentId: parentIdInput,
+                });
+                return {
+                    content: [jsonText({
+                            success: true,
+                            message: "Tag updated successfully",
+                            tag: {
+                                id: updatedTag.id,
+                                name: updatedTag.name,
+                                slug: updatedTag.slug,
+                                description: updatedTag.description,
+                                color: updatedTag.color,
+                                icon: updatedTag.icon,
+                                isHidden: updatedTag.isHidden,
+                                isRestricted: updatedTag.isRestricted,
+                                parentId: updatedTag.parentId,
+                            },
+                        })],
+                };
+            }
+            case "flarum_delete_tag": {
+                if (!flarumClient.isAuthenticated()) {
+                    return {
+                        content: [
+                            { type: "text", text: "Error: please use the flarum_login tool first" },
+                        ],
+                        isError: true,
+                    };
+                }
+                await flarumClient.deleteTag(args.id);
+                return {
+                    content: [jsonText({
+                            success: true,
+                            message: `Tag ${args.id} deleted`,
                         })],
                 };
             }

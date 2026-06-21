@@ -130,15 +130,60 @@ export interface TagAttributes {
     color: string;
     icon?: string;
     discussionCount: number;
-    position?: number;
+    postCount?: number;
+    position?: number | null;
+    defaultSort?: string | null;
     isChild: boolean;
     isHidden: boolean;
+    isRestricted?: boolean;
+    lastPostedAt?: string | null;
+    canStartDiscussion?: boolean;
+    canAddToDiscussion?: boolean;
+    backgroundUrl?: string | null;
+    backgroundMode?: string | null;
 }
 export interface Tag {
     id: string;
     name: string;
     slug: string;
+    description: string | null;
     color: string;
+    icon?: string | null;
+    discussionCount: number;
+    postCount?: number;
+    position?: number | null;
+    isChild: boolean;
+    isHidden: boolean;
+    isRestricted?: boolean;
+    lastPostedAt?: string | null;
+    canStartDiscussion?: boolean;
+    canAddToDiscussion?: boolean;
+    backgroundUrl?: string | null;
+    backgroundMode?: string | null;
+    defaultSort?: string | null;
+    parentId?: string | null;
+    parent?: Tag;
+    children?: Tag[];
+}
+export interface CreateTagParams {
+    name: string;
+    slug?: string;
+    description?: string;
+    color?: string;
+    icon?: string;
+    isHidden?: boolean;
+    isRestricted?: boolean;
+    parentId?: string;
+}
+export interface UpdateTagParams {
+    name?: string;
+    slug?: string;
+    description?: string;
+    color?: string;
+    icon?: string;
+    isHidden?: boolean;
+    isRestricted?: boolean;
+    parentId?: string;
 }
 export interface ListParams {
     limit?: number;

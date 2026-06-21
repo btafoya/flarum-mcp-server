@@ -439,6 +439,89 @@ export class FlarumClient {
         const response = await this.request("GET", "/api/tags");
         return this.parseTags(response);
     }
+    /**
+     * Create a new tag (category)
+     */
+    async createTag(params) {
+        const attributes = {
+            name: params.name,
+        };
+        if (params.slug !== undefined)
+            attributes.slug = params.slug;
+        if (params.description !== undefined)
+            attributes.description = params.description;
+        if (params.color !== undefined)
+            attributes.color = params.color;
+        if (params.icon !== undefined)
+            attributes.icon = params.icon;
+        if (params.isHidden !== undefined)
+            attributes.isHidden = params.isHidden;
+        if (params.isRestricted !== undefined)
+            attributes.isRestricted = params.isRestricted;
+        // ponytail: isChild is set automatically when a parent relationship is present
+        const body = {
+            data: {
+                type: "tags",
+                attributes,
+                relationships: {},
+            },
+        };
+        if (params.parentId) {
+            body.data.relationships = {
+                parent: {
+                    data: { type: "tags", id: params.parentId },
+                },
+            };
+        }
+        const response = await this.request("POST", "/api/tags", body);
+        const tags = this.parseTags(response);
+        return tags[0];
+    }
+    /**
+     * Update an existing tag (category)
+     */
+    async updateTag(id, params) {
+        const attributes = {};
+        if (params.name !== undefined)
+            attributes.name = params.name;
+        if (params.slug !== undefined)
+            attributes.slug = params.slug;
+        if (params.description !== undefined)
+            attributes.description = params.description;
+        if (params.color !== undefined)
+            attributes.color = params.color;
+        if (params.icon !== undefined)
+            attributes.icon = params.icon;
+        if (params.isHidden !== undefined)
+            attributes.isHidden = params.isHidden;
+        if (params.isRestricted !== undefined)
+            attributes.isRestricted = params.isRestricted;
+        const body = {
+            data: {
+                type: "tags",
+                id,
+                attributes,
+            },
+        };
+        // ponytail: parentId is managed via relationships, not attributes
+        if (params.parentId !== undefined) {
+            body.data.relationships = {
+                parent: {
+                    data: params.parentId ? { type: "tags", id: params.parentId } : null,
+                },
+            };
+        }
+        const response = await this.request("PATCH", `/api/tags/${id}`, body);
+        const tags = this.parseTags(response);
+        return tags[0];
+    }
+    /**
+     * Delete a tag (category)
+     * @param id Tag ID
+     */
+    async deleteTag(id) {
+        await this.request("DELETE", `/api/tags/${id}`);
+    }
     // ==================== User API ====================
     /**
      * Get user list
@@ -638,12 +721,70 @@ export class FlarumClient {
      */
     parseTags(response) {
         const data = Array.isArray(response.data) ? response.data : [response.data];
-        return data.map((item) => ({
-            id: item.id,
-            name: item.attributes.name,
-            slug: item.attributes.slug,
-            color: item.attributes.color,
-        }));
+        const includedMap = this.buildIncludedMap(response.included);
+        const tags = data.map((item) => {
+            const tag = {
+                id: item.id,
+                name: item.attributes.name,
+                slug: item.attributes.slug,
+                description: item.attributes.description ?? null,
+                color: item.attributes.color,
+                icon: item.attributes.icon ?? null,
+                discussionCount: item.attributes.discussionCount,
+                postCount: item.attributes.postCount,
+                position: item.attributes.position ?? null,
+                isChild: item.attributes.isChild,
+                isHidden: item.attributes.isHidden,
+                isRestricted: item.attributes.isRestricted,
+                lastPostedAt: item.attributes.lastPostedAt ?? null,
+                canStartDiscussion: item.attributes.canStartDiscussion,
+                canAddToDiscussion: item.attributes.canAddToDiscussion,
+                backgroundUrl: item.attributes.backgroundUrl ?? null,
+                backgroundMode: item.attributes.backgroundMode ?? null,
+                defaultSort: item.attributes.defaultSort ?? null,
+            };
+            const parentRef = item.relationships?.parent?.data;
+            if (parentRef && !Array.isArray(parentRef)) {
+                tag.parentId = parentRef.id;
+                const parent = includedMap.get(`tags:${parentRef.id}`);
+                if (parent) {
+                    const attrs = parent.attributes;
+                    tag.parent = {
+                        id: parentRef.id,
+                        name: attrs.name,
+                        slug: attrs.slug,
+                        description: attrs.description ?? null,
+                        color: attrs.color,
+                        icon: attrs.icon ?? null,
+                        discussionCount: attrs.discussionCount,
+                        postCount: attrs.postCount,
+                        position: attrs.position ?? null,
+                        isChild: attrs.isChild,
+                        isHidden: attrs.isHidden,
+                        isRestricted: attrs.isRestricted,
+                        lastPostedAt: attrs.lastPostedAt ?? null,
+                        canStartDiscussion: attrs.canStartDiscussion,
+                        canAddToDiscussion: attrs.canAddToDiscussion,
+                        backgroundUrl: attrs.backgroundUrl ?? null,
+                        backgroundMode: attrs.backgroundMode ?? null,
+                        defaultSort: attrs.defaultSort ?? null,
+                    };
+                }
+            }
+            return tag;
+        });
+        // ponytail: build child lists from parentId so callers get a tree view
+        const tagMap = new Map(tags.map((t) => [t.id, t]));
+        for (const tag of tags) {
+            if (tag.parentId) {
+                const parent = tagMap.get(tag.parentId);
+                if (parent) {
+                    parent.children = parent.children || [];
+                    parent.children.push(tag);
+                }
+            }
+        }
+        return tags;
     }
     /**
      * Parse user data
