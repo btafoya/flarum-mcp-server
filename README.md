@@ -13,7 +13,11 @@ npm install -g @btafoya/flarum-mcp-server
 ### npx (no install)
 
 ```bash
-claude mcp add flarum -e FLARUM_BASE_URL=https://your-forum.com -e FLARUM_USERNAME=your-email@example.com -e FLARUM_PASSWORD=your-password -- npx @btafoya/flarum-mcp-server
+claude mcp add flarum \
+  -e FLARUM_BASE_URL=https://your-forum.com \
+  -e FLARUM_USERNAME=your-email@example.com \
+  -e FLARUM_PASSWORD=your-password \
+  -- npx @btafoya/flarum-mcp-server
 ```
 
 ## Claude Code CLI
@@ -21,10 +25,14 @@ claude mcp add flarum -e FLARUM_BASE_URL=https://your-forum.com -e FLARUM_USERNA
 Add the server to Claude Code:
 
 ```bash
-claude mcp add flarum -e FLARUM_BASE_URL=https://your-forum.com -e FLARUM_USERNAME=your-email@example.com -e FLARUM_PASSWORD=your-password -- flarum-mcp-server
+claude mcp add flarum \
+  -e FLARUM_BASE_URL=https://your-forum.com \
+  -e FLARUM_USERNAME=your-email@example.com \
+  -e FLARUM_PASSWORD=your-password \
+  -- flarum-mcp-server
 ```
 
-Or edit `~/.claude/settings.json` directly:
+If the environment variables are not picked up after running the command above, add the server manually in `~/.claude/settings.json`:
 
 ```json
 {
